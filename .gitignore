@@ -1,0 +1,16 @@
+security-agent/keys/*
+!security-agent/keys/.gitkeep
+
+__pycache__/
+*.pyc
+
+.env
+.env.*
+
+evidence/logs/*
+evidence/results/*
+!evidence/logs/.gitkeep
+!evidence/results/.gitkeep
+
+.DS_Store
+Thumbs.db

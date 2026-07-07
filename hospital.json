@@ -1,0 +1,5 @@
+
+{
+  "scope": { "slice_id": "hospital", "sector": "hospital" },
+"statement": { "security_level": "L1", "crypto_profile": "LIBZUPT_HYBRID", "ttl_seconds": 3600, "reason": "Sensitive healthcare data" }
+}

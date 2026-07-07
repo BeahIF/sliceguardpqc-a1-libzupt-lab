@@ -1,0 +1,78 @@
+services:
+  a1pms:
+    image: nexus3.o-ran-sc.org:10002/o-ran-sc/nonrtric-plt-a1policymanagementservice:2.10.0
+    container_name: a1pms
+    networks:
+      - nonrtric-docker-net
+    ports:
+      - "8081:8081" # HTTP NBI
+      - "8433:8433" # HTTPS NBI (opcional)
+    volumes:
+      # Config do A1-PMS: define quais RICs (simulados) existem e suas baseUrls
+      - ./application_configuration.json:/opt/app/policy-agent/data/application_configuration.json:ro
+    depends_on:
+      - ric1
+
+  ric1:
+    image: nexus3.o-ran-sc.org:10002/o-ran-sc/a1-simulator:2.8.1
+    container_name: ric1
+    networks:
+      - nonrtric-docker-net
+    environment:
+      - A1_VERSION=OSC_2.1.0
+      - ALLOW_HTTP=true
+    ports:
+      - "8085:8085" # HTTP
+      - "8185:8185" # HTTPS (opcional)
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "wget -qO- http://localhost:8085/container_interfaces || exit 1",
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+  policy-bootstrap:
+    image: curlimages/curl:latest
+    container_name: sliceguard-policy-bootstrap
+    entrypoint:
+      - /bin/sh
+      - /bootstrap/bootstrap-policies.sh
+    environment:
+      # A1_SIMULATOR_URL: http://ric1:8085
+      A1_SIMULATOR_URL: http://host.docker.internal:8085
+    volumes:
+      - ./bootstrap:/bootstrap:ro
+      - ./policytype-2001.json:/policies/policytype-2001.json:ro
+      - ./hospital.json:/policies/hospital.json:ro
+      - ./industry.json:/policies/industry.json:ro
+      - ./public.json:/policies/public.json:ro
+    depends_on:
+      - ric1
+    networks:
+      - nonrtric-docker-net
+    restart: "no"
+
+  security-agent:
+    build:
+      context: ./security-agent
+      dockerfile: Dockerfile
+    container_name: sliceguard-security-agent
+    environment:
+      A1PMS_BASE_URL: http://host.docker.internal:8085
+      POLICY_ID: slice-hospital-security
+      POLICY_SOURCE: file
+      POLICY_FILES_DIR: /policies
+    volumes:
+      - ./security-agent/keys:/app/keys
+      - ./hospital.json:/policies/slice-hospital-security.json:ro
+      - ./industry.json:/policies/slice-industry-security.json:ro
+      - ./public.json:/policies/slice-public-security.json:ro
+    # depends_on:
+    # - ric1
+    networks:
+      - nonrtric-docker-net
+networks:
+  nonrtric-docker-net:
+    driver: bridge

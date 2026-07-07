@@ -1,0 +1,34 @@
+{
+  "name": "security_profile_v1",
+  "description": "Adaptive crypto profile per slice (L0/L1)",
+  "policy_type_id": 2001,
+  "create_schema": {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "security_profile_v1",
+    "description": "Security profile policy type",
+    "type": "object",
+    "properties": {
+      "scope": {
+        "type": "object",
+        "properties": {
+          "slice_id": { "type": "string", "enum": ["hospital", "industry", "public"] },
+          "sector":   { "type": "string", "enum": ["hospital", "industry", "public"] }
+        },
+        "additionalProperties": false,
+        "required": ["slice_id", "sector"]
+      },
+      "statement": {
+        "type": "object",
+        "properties": {
+          "security_level": { "type": "string", "enum": ["L0", "L1"] },"crypto_profile": { "type": "string", "enum": [ "NONE", "LIBZUPT_HYBRID" ] },
+          "ttl_seconds": { "type": "number" },
+          "reason": { "type": "string" }
+        },
+        "additionalProperties": false,
+        "required": ["security_level", "crypto_profile"]
+      }
+    },
+    "additionalProperties": false,
+    "required": ["scope", "statement"]
+  }
+}

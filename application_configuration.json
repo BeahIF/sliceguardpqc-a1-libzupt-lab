@@ -1,0 +1,11 @@
+{
+  "config": {
+    "ric": [
+      {
+        "name": "ric1",
+        "baseUrl": "http://ric1:8085/",
+        "managedElementIds": ["me_hospital", "me_industry", "me_public"]
+      }
+    ]
+  }
+}

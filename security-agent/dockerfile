@@ -1,0 +1,65 @@
+FROM ubuntu:24.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV PYTHONUNBUFFERED=1
+
+RUN apt-get update && apt-get install -y \
+    git \
+    cmake \
+    make \
+    g++ \
+    python3 \
+    python3-pip \
+    python3-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# O build.sh importa pybind11 como módulo Python.
+RUN pip3 install \
+    --break-system-packages \
+    --no-cache-dir \
+    pybind11
+
+WORKDIR /opt
+
+RUN git clone --depth 1 https://github.com/cabelo/libzupt.git
+
+# Compila a biblioteca C++ principal.
+WORKDIR /opt/libzupt
+
+RUN mkdir -p build && \
+    cd build && \
+    cmake .. \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DLIBZUPT_BUILD_TESTS=OFF \
+        -DLIBZUPT_BUILD_PYTHON=OFF && \
+    make -j$(nproc) && \
+    make install && \
+    ldconfig
+
+# Compila o binding Python usando o script oficial.
+WORKDIR /opt/libzupt/examples_python
+
+RUN chmod +x build.sh && \
+    ./build.sh
+
+# O módulo zupt*.so é gerado dentro dessa pasta/build.
+ENV PYTHONPATH="/opt/libzupt/examples_python/build:/opt/libzupt/examples_python:${PYTHONPATH}"
+
+# Valida a importação durante o próprio build.
+RUN python3 -c "\
+import zupt; \
+print('libzupt Python carregada:', zupt.__version__); \
+print('Header size:', zupt.HYBRID_ENC_HEADER_SIZE)"
+
+WORKDIR /app
+
+COPY requirements.txt .
+
+RUN pip3 install \
+    --break-system-packages \
+    --no-cache-dir \
+    -r requirements.txt
+
+COPY . .
+
+CMD ["python3", "app.py"]

@@ -1,0 +1,5 @@
+
+{
+  "scope": { "slice_id": "public", "sector": "public" },
+  "statement": { "security_level": "L0", "crypto_profile": "NONE", "ttl_seconds": 3600, "reason": "baseline_public" }
+}
